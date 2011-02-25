@@ -3,8 +3,8 @@ dojo.provide('mazeexplorer.entities.Gold');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
-    sound: 'gold',
-    baseVolume: 100,
+    sound: '100hz_tone',
+    baseVolume: 0,
     color: 'yellow',
     
     pointValue: 0,

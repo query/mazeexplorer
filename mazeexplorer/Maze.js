@@ -12,21 +12,35 @@ dojo.declare('mazeexplorer.Maze', null, {
                   mazeexplorer.entities.Monster,
                   mazeexplorer.entities.Exit],
     
-    constructor: function (width, height) {
-        var i, j, entity;
-        
-        if ((width === undefined || height === undefined) && console) {
-            console.error('Maze: Both width and height must be specified.');
-        }
-        
-        this.width = width;
-        this.height = height;
+    constructor: function (args) {
+        this.width = args.width || 15;
+        this.height = args.height || 15;
         this.player = new mazeexplorer.Player();
+        this.entities = [];
+        
+        if (args.audio) {
+            this._onAudioReady(args.audio);
+        } else {
+            uow.getAudio({defaultCaching: true}).then(dojo.hitch(this, this._onAudioReady));
+        }
+    },
+    
+    _onAudioReady: function (audio) {
+        this.audio = audio;
+        this.audio.say({text: 'Level 1'});
         
         this.newLevel();
     },
     
     newLevel: function () {
+        var i, j, entity;
+        
+        // Stop sounds from all old entity channels.
+        for (i = 0; i < this.entities.length; i++) {
+            this.audio.stop({channel: this.entities[i].channel + '.L'});
+            this.audio.stop({channel: this.entities[i].channel + '.R'});
+        }
+        
         // Fill the maze area with paths.
         this.origin = {x: Math.floor(Math.random() * this.width),
                        y: Math.floor(Math.random() * this.height)};
@@ -39,6 +53,23 @@ dojo.declare('mazeexplorer.Maze', null, {
                 entity = new this.entityTypes[i](this);
                 entity.x = Math.floor(Math.random() * this.width);
                 entity.y = Math.floor(Math.random() * this.height);
+                entity.channel = 'entity' + i + '.' + j;
+                
+                this.audio.setProperty({channel: entity.channel + '.L',
+                                        name: 'loop', value: true});
+                this.audio.setProperty({channel: entity.channel + '.R',
+                                        name: 'loop', value: true});
+                
+                this.audio.setProperty({channel: entity.channel + '.L',
+                                        name: 'volume', value: 0});
+                this.audio.setProperty({channel: entity.channel + '.R',
+                                        name: 'volume', value: 0});
+                
+                this.audio.play({channel: entity.channel + '.L',
+                                 url: 'audio/' + entity.sound + '.L'});
+                this.audio.play({channel: entity.channel + '.R',
+                                 url: 'audio/' + entity.sound + '.R'});
+                
                 this.entities.push(entity);
             }
         }
@@ -48,6 +79,8 @@ dojo.declare('mazeexplorer.Maze', null, {
         this.player.y = this.origin.y;
         
         // TODO: Point the player in a walkable direction.
+        
+        this.updateSounds();
     },
     
     _getUnvisitedNeighbor: function (coordinate) {
@@ -257,8 +290,6 @@ dojo.declare('mazeexplorer.Maze', null, {
                 pathAngle = 0;
             }
             
-            console.log((playerAngle - pathAngle) % 4);
-            
             switch ((playerAngle - pathAngle) % 4) {
                          case 0: heading = {x:  0, y: -1}; break;
                 case -3: case 1: heading = {x: -1, y:  0}; break;
@@ -284,7 +315,7 @@ dojo.declare('mazeexplorer.Maze', null, {
     
     // Attempt to move the player in the direction specified by deltaX
     // and deltaY, stopping for walls.
-    movePlayer: function(deltaX, deltaY) {
+    movePlayer: function (deltaX, deltaY) {
         if (this.player.x + deltaX < 0 ||
             this.player.x + deltaX >= this.width ||
             this.player.y + deltaY < 0 ||
@@ -306,6 +337,64 @@ dojo.declare('mazeexplorer.Maze', null, {
             for (x = 0; x < this.entities.length; x++) {
                 this.entities[x].update(this);
             }
+            
+            this.updateSounds();
+        }
+    },
+    
+    updateSounds: function () {
+        var playerAngle, pathAngle, audioArgs, realVolume;
+        
+        for (x = 0; x < this.entities.length; x++) {
+            // Angle values:
+            // -4, 0, 4...: right
+            // -3, 1, 5...: down
+            // -2, 2, 6...: left
+            // -1, 3, 7...: up
+            
+            if (this.player.heading.x > 0) {
+                playerAngle = 0;
+            } else if (this.player.heading.y > 0) {
+                playerAngle = 1;
+            } else if (this.player.heading.x < 0) {
+                playerAngle = 2;
+            } else {
+                playerAngle = 3;
+            }
+            
+            path = this.getPathFromEntityToPlayer(this.entities[x]);
+            
+            if (path.length > 1) {
+                if (path[path.length - 2].x > this.player.x) {
+                    pathAngle = 0;
+                } else if (path[path.length - 2].y > this.player.y) {
+                    pathAngle = 1;
+                } else if (path[path.length - 2].x < this.player.x) {
+                    pathAngle = 2;
+                } else {
+                    pathAngle = 3;
+                }
+            } else {
+                pathAngle = 0;
+            }
+            
+            switch ((playerAngle - pathAngle) % 4) {
+                         case 0: audioArgs = {left: 1, right: 1}; break;
+                case -3: case 1: audioArgs = {left: 1, right: 0}; break;
+                case -2: case 2: audioArgs = {left: 0, right: 0}; break;
+                case -1: case 3: audioArgs = {left: 0, right: 1}; break;
+                default:         audioArgs = {left: 0.2, right: 0.2};
+            }
+            
+            realVolume = this.entities[x].baseVolume / Math.pow(path.length, 2);
+            realVolume = realVolume > 1 ? 1 : realVolume;
+            
+            this.audio.setProperty({channel: this.entities[x].channel + '.L',
+                                    immediate: true, name: 'volume',
+                                    value: realVolume * audioArgs.left});
+            this.audio.setProperty({channel: this.entities[x].channel + '.R',
+                                    immediate: true, name: 'volume',
+                                    value: realVolume * audioArgs.right});
         }
     },
     
@@ -388,6 +477,8 @@ dojo.declare('mazeexplorer.Maze', null, {
     
     destroyEntity: function (entity) {
         entity.destroy(this);
+        this.audio.stop({channel: entity.channel + '.L'});
+        this.audio.stop({channel: entity.channel + '.R'});
         this.entities.splice(this.entities.indexOf(entity), 1);
     }
 });

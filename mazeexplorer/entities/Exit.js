@@ -3,7 +3,7 @@ dojo.provide('mazeexplorer.entities.Exit');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Exit', [mazeexplorer.entities.Entity], {
-    sound: 'exit',
+    sound: '100hz_tone',
     baseVolume: Infinity,
     color: 'black',
     

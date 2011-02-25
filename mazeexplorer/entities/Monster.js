@@ -3,8 +3,8 @@ dojo.provide('mazeexplorer.entities.Monster');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
-    sound: 'monster',
-    baseVolume: 100,
+    sound: '100hz_tone',
+    baseVolume: 0,
     color: 'green',
     
     hitPoints: 0,

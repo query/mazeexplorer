@@ -2,6 +2,7 @@ dojo.provide('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Entity', null, {
     sound: 'filename_prefix',
+    channel: null,
     baseVolume: 0,
     color: 'green',
     
