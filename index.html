@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>maze (dojo)</title>
+<title>Maze Explorer</title>
 <script type="text/javascript">
     var djConfig = {
         isDebug: false,
@@ -14,9 +14,12 @@
 <script src="http://ajax.googleapis.com/ajax/libs/dojo/1.5.0/dojo/dojo.xd.js"></script>
 <script type="text/javascript" src="/libs/uow/trace.js"></script>
 <script type="text/javascript" src="/libs/uow.js"></script>
-<script src="application.js"></script>
+<script type="text/javascript">
+    dojo.require('dojo.parser');
+    dojo.require('mazeexplorer.MazeWidget');
+</script>
 </head>
 <body>
-<div dojoType="mazeexplorer.MazeWidget"></div>
+<div dojoType="mazeexplorer.MazeWidget" id="mazeWidget"></div>
 </body>
 </html>

@@ -3,9 +3,13 @@ dojo.provide('mazeexplorer.entities.Monster');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
-    sound: '100hz_tone',
-    baseVolume: 0,
+    sound: '48709__Sea_Fury__Monster_5',
+    baseVolume: 1,
     color: 'green',
+    
+    sounds: ['48688__Sea_Fury__Monster_4',
+             '48709__Sea_Fury__Monster_5',
+             '49127__aesqe__monster_growl_01'],
     
     hitPoints: 0,
     

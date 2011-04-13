@@ -3,9 +3,12 @@ dojo.provide('mazeexplorer.entities.Gold');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
-    sound: '100hz_tone',
-    baseVolume: 0,
+    sound: '91924__Benboncan__Till_With_Bell',
+    baseVolume: 1,
     color: 'yellow',
+    
+    sounds: ['91924__Benboncan__Till_With_Bell',
+             '32629__kjackson__Op_Cls_1'],
     
     pointValue: 0,
     

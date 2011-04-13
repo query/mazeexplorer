@@ -1,15 +1,22 @@
 dojo.provide('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Entity', null, {
-    sound: 'filename_prefix',
-    channel: null,
+    sound: 'filename_prefix', // or
+    sounds: null /* array for random selection */,
+    
     baseVolume: 0,
     color: 'green',
     
+    // used internally by Maze class
     x: 0, y: 0,
+    realVolume: 0,
+    direction: 0,
     
     constructor: function (maze) {
         // called upon "spawning" the object on the grid
+        if (this.sounds) {
+            this.sound = this.sounds[Math.floor(Math.random() * this.sounds.length)];
+        }
     },
     
     update: function (maze) {

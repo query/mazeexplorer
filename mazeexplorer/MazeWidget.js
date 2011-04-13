@@ -8,9 +8,9 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
     templateString: dojo.cache('mazeexplorer', 'templates/MazeWidget.html'),
     
     _onClick: function () {
-        this.maze = new mazeexplorer.Maze({width: 5, height: 5});
+        this.maze = new mazeexplorer.Maze({width: 15, height: 15});
         this.maze.renderBirdsEyeToCanvas(this.birdsEye, 24, 5);
-        this.maze.renderRadarToCanvas(this.radar, 2, 24, 5);
+        this.maze.renderRadarToCanvas(this.radar, 7, 24, 5);
     },
     
     _onKeyDown: function (e) {
@@ -63,7 +63,7 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
         }
         
         this.maze.renderBirdsEyeToCanvas(this.birdsEye, 24, 5);
-        this.maze.renderRadarToCanvas(this.radar, 2, 24, 5);
+        this.maze.renderRadarToCanvas(this.radar, 7, 24, 5);
         dojo.place(document.createTextNode(this.maze.player.score),
                    this.score, 'only');
     },

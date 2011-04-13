@@ -12,11 +12,15 @@ dojo.declare('mazeexplorer.Maze', null, {
                   mazeexplorer.entities.Monster,
                   mazeexplorer.entities.Exit],
     
+    audioChannels: 5,
+    
     constructor: function (args) {
         this.width = args.width || 15;
         this.height = args.height || 15;
         this.player = new mazeexplorer.Player();
         this.entities = [];
+        
+        this.newLevel();
         
         if (args.audio) {
             this._onAudioReady(args.audio);
@@ -26,20 +30,22 @@ dojo.declare('mazeexplorer.Maze', null, {
     },
     
     _onAudioReady: function (audio) {
-        this.audio = audio;
-        this.audio.say({text: 'Level 1'});
+        var i;
         
-        this.newLevel();
+        this.audio = audio;
+        
+        // Set up entity channels.
+        for (i = 0; i < this.audioChannels; i++) {
+            this.audio.setProperty({channel: 'entity' + i,
+                                    name: 'loop', value: true});
+        }
+        
+        this.audio.say({text: 'Level 1'});
+        this.updateSounds();
     },
     
     newLevel: function () {
         var i, j, entity;
-        
-        // Stop sounds from all old entity channels.
-        for (i = 0; i < this.entities.length; i++) {
-            this.audio.stop({channel: this.entities[i].channel + '.L'});
-            this.audio.stop({channel: this.entities[i].channel + '.R'});
-        }
         
         // Fill the maze area with paths.
         this.origin = {x: Math.floor(Math.random() * this.width),
@@ -53,23 +59,6 @@ dojo.declare('mazeexplorer.Maze', null, {
                 entity = new this.entityTypes[i](this);
                 entity.x = Math.floor(Math.random() * this.width);
                 entity.y = Math.floor(Math.random() * this.height);
-                entity.channel = 'entity' + i + '.' + j;
-                
-                this.audio.setProperty({channel: entity.channel + '.L',
-                                        name: 'loop', value: true});
-                this.audio.setProperty({channel: entity.channel + '.R',
-                                        name: 'loop', value: true});
-                
-                this.audio.setProperty({channel: entity.channel + '.L',
-                                        name: 'volume', value: 0});
-                this.audio.setProperty({channel: entity.channel + '.R',
-                                        name: 'volume', value: 0});
-                
-                this.audio.play({channel: entity.channel + '.L',
-                                 url: 'audio/' + entity.sound + '.L'});
-                this.audio.play({channel: entity.channel + '.R',
-                                 url: 'audio/' + entity.sound + '.R'});
-                
                 this.entities.push(entity);
             }
         }
@@ -79,8 +68,6 @@ dojo.declare('mazeexplorer.Maze', null, {
         this.player.y = this.origin.y;
         
         // TODO: Point the player in a walkable direction.
-        
-        this.updateSounds();
     },
     
     _getUnvisitedNeighbor: function (coordinate) {
@@ -343,8 +330,16 @@ dojo.declare('mazeexplorer.Maze', null, {
     },
     
     updateSounds: function () {
-        var playerAngle, pathAngle, audioArgs, realVolume;
+        var playerAngle, pathAngle, realVolume, x;
         
+        // Stop sounds on all entity channels.
+        for (x = 0; x < this.audioChannels; x++) {
+            this.audio.stop({channel: 'entity' + x});
+        }
+        
+        // Determine distance and angle of each entity, and use those
+        // values to calculate the apparent volume and direction of
+        // their sounds.
         for (x = 0; x < this.entities.length; x++) {
             // Angle values:
             // -4, 0, 4...: right
@@ -375,26 +370,40 @@ dojo.declare('mazeexplorer.Maze', null, {
                     pathAngle = 3;
                 }
             } else {
-                pathAngle = 0;
+                pathAngle = playerAngle;
             }
             
-            switch ((playerAngle - pathAngle) % 4) {
-                         case 0: audioArgs = {left: 1, right: 1}; break;
-                case -3: case 1: audioArgs = {left: 1, right: 0}; break;
-                case -2: case 2: audioArgs = {left: 0, right: 0}; break;
-                case -1: case 3: audioArgs = {left: 0, right: 1}; break;
-                default:         audioArgs = {left: 0.2, right: 0.2};
+            // Relative direction:
+            // 0: forward
+            // 1: left
+            // 2: behind
+            // 3: right
+            this.entities[x].direction = ((playerAngle - pathAngle) + 4) % 4;
+            this.entities[x].realVolume = this.entities[x].baseVolume / Math.pow(path.length / 3.16, 2);
+            
+            if (this.entities[x].direction === 2) {
+                this.entities[x].realVolume *= 0.2;
             }
+        }
+        
+        // Sort the array of entities by apparent volume.
+        this.entities.sort(function (a, b) {
+            return b.realVolume - a.realVolume;  // b - a, loudest first
+        });
+        
+        // Play sounds from the loudest entities.
+        for (x = 0; x < Math.min(this.entities.length, this.audioChannels); x++) {
+            realVolume = Math.max(0.05, Math.min(this.entities[x].realVolume, 1));
+            console.debug(this.entities[x].sound + '-' +
+                          this.entities[x].direction, realVolume);
             
-            realVolume = this.entities[x].baseVolume / Math.pow(path.length, 2);
-            realVolume = realVolume > 1 ? 1 : realVolume;
-            
-            this.audio.setProperty({channel: this.entities[x].channel + '.L',
+            this.audio.setProperty({channel: 'entity' + x,
                                     immediate: true, name: 'volume',
-                                    value: realVolume * audioArgs.left});
-            this.audio.setProperty({channel: this.entities[x].channel + '.R',
-                                    immediate: true, name: 'volume',
-                                    value: realVolume * audioArgs.right});
+                                    value: realVolume});
+            this.audio.play({channel: 'entity' + x,
+                             url: 'audio/generated/' +
+                                  this.entities[x].sound + '-' +
+                                  this.entities[x].direction});
         }
     },
     
@@ -477,8 +486,6 @@ dojo.declare('mazeexplorer.Maze', null, {
     
     destroyEntity: function (entity) {
         entity.destroy(this);
-        this.audio.stop({channel: entity.channel + '.L'});
-        this.audio.stop({channel: entity.channel + '.R'});
         this.entities.splice(this.entities.indexOf(entity), 1);
     }
 });

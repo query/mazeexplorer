@@ -3,8 +3,8 @@ dojo.provide('mazeexplorer.entities.Exit');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Exit', [mazeexplorer.entities.Entity], {
-    sound: '100hz_tone',
-    baseVolume: Infinity,
+    sound: '23448__Percy_Duke__Door_Creak_Short',
+    baseVolume: 10,
     color: 'black',
     
     update: function (maze) {
