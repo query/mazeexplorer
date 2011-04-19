@@ -4,11 +4,12 @@ dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
     sound: '91924__Benboncan__Till_With_Bell',
+    name: 'gold coins',
     baseVolume: 1,
     color: 'yellow',
     
     sounds: ['91924__Benboncan__Till_With_Bell',
-             '32629__kjackson__Op_Cls_1'],
+             '32629__kjackson__Op_Cls_1-edit'],
     
     pointValue: 0,
     
@@ -27,7 +28,3 @@ dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
         // called when the object is being removed from the maze
     }
 });
-
-mazeexplorer.entities.Gold.spawnFrequency = function (maze) {
-    return 0.1;
-};

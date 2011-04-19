@@ -27,8 +27,3 @@ dojo.declare('mazeexplorer.entities.Entity', null, {
         // called when the object is being removed from the maze
     }
 });
-
-mazeexplorer.entities.Entity.spawnFrequency = function (maze) {
-    // determines the spawn frequency of the object
-    return 0;
-};

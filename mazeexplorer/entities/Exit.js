@@ -13,7 +13,3 @@ dojo.declare('mazeexplorer.entities.Exit', [mazeexplorer.entities.Entity], {
         }
     }
 });
-
-mazeexplorer.entities.Exit.spawnFrequency = function (maze) {
-    return 0.01;
-};

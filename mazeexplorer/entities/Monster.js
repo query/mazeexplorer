@@ -5,6 +5,7 @@ dojo.require('mazeexplorer.entities.Entity');
 dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
     sound: '48709__Sea_Fury__Monster_5',
     baseVolume: 1,
+    name: 'a monster',
     color: 'green',
     
     sounds: ['48688__Sea_Fury__Monster_4',
@@ -20,14 +21,28 @@ dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
         this.hitPoints = 100;
     },
     
+    _checkForPlayerEncounter: function (maze) {
+        if (maze.player.x === this.x && maze.player.y === this.y) {
+            maze.destroyEntity(this);
+            return true;
+        }
+        
+        return false;
+    },
+    
     update: function (maze) {
-        // Stagger around randomly.
-        var deltaX = Math.floor(Math.random() * 3) - 1,
+        var playerEncountered = this._checkForPlayerEncounter(maze),
+            // Stagger around randomly.
+            deltaX = Math.floor(Math.random() * 3) - 1,
             deltaY = Math.floor(Math.random() * 3) - 1,
             cur, dest;
         
-        if (this.x + deltaX < 0 || this.x + deltaX >= maze.width ||
-            this.y + deltaY < 0 || this.y + deltaY >= maze.height) {
+        if (playerEncountered) {
+            return;
+        }
+        
+        if (this.x + deltaX < 0 || this.x + deltaX >= maze.currentLevel.width ||
+            this.y + deltaY < 0 || this.y + deltaY >= maze.currentLevel.height) {
             return;
         }
         
@@ -41,13 +56,12 @@ dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
             this.x += deltaX;
             this.y += deltaY;
         }
+        
+        this._checkForPlayerEncounter(maze);
     },
     
     destroy: function (maze) {
-        // called when the object is being removed from the maze
+        maze.audio.play({channel: 'monsterAttack',
+                         url: 'audio/generated/43586__Syna_Max__punches_and_slaps-single-0'});
     }
 });
-
-mazeexplorer.entities.Monster.spawnFrequency = function (maze) {
-    return 0.02;
-};

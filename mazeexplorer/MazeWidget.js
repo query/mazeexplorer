@@ -2,15 +2,22 @@ dojo.provide('mazeexplorer.MazeWidget');
 
 dojo.require('dijit._Widget');
 dojo.require('dijit._Templated');
+dojo.require('uow.audio.JSonic');
 dojo.require('mazeexplorer.Maze');
 
 dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
     templateString: dojo.cache('mazeexplorer', 'templates/MazeWidget.html'),
     
-    _onClick: function () {
-        this.maze = new mazeexplorer.Maze({width: 15, height: 15});
+    _redraw: function () {
         this.maze.renderBirdsEyeToCanvas(this.birdsEye, 24, 5);
-        this.maze.renderRadarToCanvas(this.radar, 7, 24, 5);
+        this.maze.renderRadarToCanvas(this.radar, 10, 10, 1);
+    },
+    
+    _onClick: function () {
+        uow.getAudio({defaultCaching: true}).then(dojo.hitch(this, function (audio) {
+            this.maze = new mazeexplorer.Maze({audio: audio});
+            this._redraw();
+        }));
     },
     
     _onKeyDown: function (e) {
@@ -60,10 +67,14 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
                 this.maze.movePlayer(-this.maze.player.heading.x,
                                      -this.maze.player.heading.y);
             break;
+            
+            case dojo.keys.ESCAPE:
+                e.preventDefault();
+                this.maze.describeEntities();
+            break;
         }
         
-        this.maze.renderBirdsEyeToCanvas(this.birdsEye, 24, 5);
-        this.maze.renderRadarToCanvas(this.radar, 7, 24, 5);
+        this._redraw();
         dojo.place(document.createTextNode(this.maze.player.score),
                    this.score, 'only');
     },

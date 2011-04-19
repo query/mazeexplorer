@@ -1,28 +1,28 @@
 dojo.provide('mazeexplorer.Maze');
 
-dojo.require('mazeexplorer.entities.Entity');
-dojo.require('mazeexplorer.entities.Gold');
-dojo.require('mazeexplorer.entities.Monster');
-dojo.require('mazeexplorer.entities.Exit');
 dojo.require('mazeexplorer.Player');
+dojo.require('mazeexplorer.levels.sample.Level1');
+//dojo.require('mazeexplorer.levels.sample.Level2');
+dojo.require('mazeexplorer.levels.sample.Level3');
 
 dojo.declare('mazeexplorer.Maze', null, {
-    // Should be defined by subclasses?
-    entityTypes: [mazeexplorer.entities.Gold,
-                  mazeexplorer.entities.Monster,
-                  mazeexplorer.entities.Exit],
+    levelClasses: [mazeexplorer.levels.sample.Level1,
+//                   mazeexplorer.levels.sample.Level2,
+                   mazeexplorer.levels.sample.Level3],
+    levelIndex: 0,
+    currentLevel: null,
+    
+    cells: null,
+    entities: null,
+    origin: null,
     
     audioChannels: 5,
     
     constructor: function (args) {
-        this.width = args.width || 15;
-        this.height = args.height || 15;
         this.player = new mazeexplorer.Player();
         this.entities = [];
         
-        this.newLevel();
-        
-        if (args.audio) {
+        if (args && args.audio) {
             this._onAudioReady(args.audio);
         } else {
             uow.getAudio({defaultCaching: true}).then(dojo.hitch(this, this._onAudioReady));
@@ -30,100 +30,30 @@ dojo.declare('mazeexplorer.Maze', null, {
     },
     
     _onAudioReady: function (audio) {
-        var i;
-        
         this.audio = audio;
-        this.audio.say({channel: 'announce', text: 'Level 1'});
-        this.updateSounds();
+        this.newLevel();
     },
     
     newLevel: function () {
-        var i, j, entity;
+        this.currentLevel = new this.levelClasses[this.levelIndex](this);
+        this.levelIndex++;
         
-        // Fill the maze area with paths.
-        this.origin = {x: Math.floor(Math.random() * this.width),
-                       y: Math.floor(Math.random() * this.height)};
-        this.fill(this.origin.x, this.origin.y);
-        
-        // Place entities inside the maze.
-        this.entities = [];
-        for (i = 0; i < this.entityTypes.length; i++) {            
-            for (j = 0; j < this.entityTypes[i].spawnFrequency(this) * this.width * this.height; j++) {
-                entity = new this.entityTypes[i](this);
-                entity.x = Math.floor(Math.random() * this.width);
-                entity.y = Math.floor(Math.random() * this.height);
-                this.entities.push(entity);
-            }
+        if (this.currentLevel.introduction) {
+            this.audio.setProperty({name: 'volume', value: 1});
+            this.currentLevel.introduction(this).callAfter(dojo.hitch(this, this.updateSounds));
+        } else {
+            this.updateSounds();
         }
-        
-        // Place player inside the maze.
-        this.player.x = this.origin.x;
-        this.player.y = this.origin.y;
-        
-        // TODO: Point the player in a walkable direction.
-    },
-    
-    _getUnvisitedNeighbor: function (coordinate) {
-        var i, cardinalDirections = [{x:  1, y:  0}, {x: -1, y:  0},
-                                     {x:  0, y:  1}, {x:  0, y: -1}],
-            x = coordinate.x, y = coordinate.y, newX, newY;
-        
-        (function shuffle(list) {
-            // Implements Durstenfeld's version of the Fisher-Yates shuffle.
-            var i, j, t;
-            for (i = list.length - 1; i > 0; i--) {
-                j = Math.floor(Math.random() * (1 + i));  // choose j in [0..i]
-                if (j !== i) {
-                    // Swap list[i] and list[j].
-                    t = list[i];
-                    list[i] = list[j];
-                    list[j] = t;
-                }
-            }
-        }(cardinalDirections));
-        
-        for (i = 0; i < cardinalDirections.length; i++) {
-            newX = x + cardinalDirections[i].x;
-            newY = y + cardinalDirections[i].y;
-            if ((newX >= 0) && (newX < this.width) &&
-                    (newY >= 0) && (newY < this.height) &&
-                    (!this.cells[newX][newY])) {
-                return {x: newX, y: newY};
-            }
-        }
-        
-        return null;
-    },
-    
-    fill: function (initialX, initialY) {
-        var path = [{x: initialX, y: initialY}], origin, neighbor, i;
-        
-        // Allocate the two-dimensional cell array.
-        this.cells = [];
-        for (i = 0; i < this.width; i++) {
-            this.cells[i] = [];
-        }
-        
-        this.cells[initialX][initialY] = -1;
-        
-        do {
-            origin = path[path.length - 1];
-            neighbor = this._getUnvisitedNeighbor(origin);
-            
-            if (neighbor) {
-                this.cells[neighbor.x][neighbor.y] = origin;
-                path.push(neighbor);
-            } else {
-                path.pop();
-            }
-        } while (path.length > 0);
     },
     
     renderBirdsEyeToCanvas: function (canvas, cellWidth, borderWidth) {
-        var ctx = canvas.getContext('2d'), x, y, cell, path;
+        var ctx = canvas.getContext('2d'),
+            width = this.currentLevel.width,
+            height = this.currentLevel.height,
+            x, y, cell, path;
         
-        canvas.width  = this.width  * (cellWidth + borderWidth) + borderWidth;
-        canvas.height = this.height * (cellWidth + borderWidth) + borderWidth;
+        canvas.width  = width  * (cellWidth + borderWidth) + borderWidth;
+        canvas.height = height * (cellWidth + borderWidth) + borderWidth;
         
         // Background fill.
         ctx.fillStyle = 'white';
@@ -131,20 +61,20 @@ dojo.declare('mazeexplorer.Maze', null, {
         
         // Draw initial grid.
         ctx.fillStyle = 'black';
-        for (x = 0; x <= this.width; x++) {
+        for (x = 0; x <= width; x++) {
             ctx.fillRect(x * (cellWidth + borderWidth), 0,
                          borderWidth, canvas.height);
         }
         
-        for (y = 0; y <= this.height; y++) {
+        for (y = 0; y <= height; y++) {
             ctx.fillRect(0, y * (cellWidth + borderWidth),
                          canvas.width, borderWidth);
         }
         
         // Punch holes in maze walls for paths.
         ctx.fillStyle = 'white';
-        for (x = 0; x < this.width; x++) {
-            for (y = 0; y < this.height; y++) {
+        for (x = 0; x < width; x++) {
+            for (y = 0; y < height; y++) {
                 if (this.cells[x][y].x < x) {         // remove left wall
                     ctx.fillRect(x * (cellWidth + borderWidth),
                                  y * (cellWidth + borderWidth) + borderWidth,
@@ -297,9 +227,9 @@ dojo.declare('mazeexplorer.Maze', null, {
     // and deltaY, stopping for walls.
     movePlayer: function (deltaX, deltaY) {
         if (this.player.x + deltaX < 0 ||
-            this.player.x + deltaX >= this.width ||
+            this.player.x + deltaX >= this.currentLevel.width ||
             this.player.y + deltaY < 0 ||
-            this.player.y + deltaY >= this.height) {
+            this.player.y + deltaY >= this.currentLevel.height) {
             return;
         }
         
@@ -331,44 +261,7 @@ dojo.declare('mazeexplorer.Maze', null, {
         // values to calculate the apparent volume and direction of
         // their sounds.
         for (x = 0; x < this.entities.length; x++) {
-            // Angle values:
-            // -4, 0, 4...: right
-            // -3, 1, 5...: down
-            // -2, 2, 6...: left
-            // -1, 3, 7...: up
-            
-            if (this.player.heading.x > 0) {
-                playerAngle = 0;
-            } else if (this.player.heading.y > 0) {
-                playerAngle = 1;
-            } else if (this.player.heading.x < 0) {
-                playerAngle = 2;
-            } else {
-                playerAngle = 3;
-            }
-            
-            path = this.getPathFromEntityToPlayer(this.entities[x]);
-            
-            if (path.length > 1) {
-                if (path[path.length - 2].x > this.player.x) {
-                    pathAngle = 0;
-                } else if (path[path.length - 2].y > this.player.y) {
-                    pathAngle = 1;
-                } else if (path[path.length - 2].x < this.player.x) {
-                    pathAngle = 2;
-                } else {
-                    pathAngle = 3;
-                }
-            } else {
-                pathAngle = playerAngle;
-            }
-            
-            // Relative direction:
-            // 0: forward
-            // 1: left
-            // 2: behind
-            // 3: right
-            this.entities[x].direction = ((playerAngle - pathAngle) + 4) % 4;
+            this.entities[x].direction = this.getEntityDirection(this.entities[x]);
             this.entities[x].realVolume = this.entities[x].baseVolume / Math.pow(path.length / 3.16, 2);
             
             if (this.entities[x].direction === 2) {
@@ -387,9 +280,6 @@ dojo.declare('mazeexplorer.Maze', null, {
             
             for (x = 0; x < Math.min(this.entities.length, this.audioChannels); x++) {
                 realVolume = Math.max(0.05, Math.min(this.entities[x].realVolume, 1));
-                console.debug(this.entities[x].sound + '-' +
-                              this.entities[x].direction, realVolume);
-                
                 this.audio.setProperty({name: 'volume',
                                         value: realVolume});
                 d = this.audio.play({url: 'audio/generated/' +
@@ -397,7 +287,11 @@ dojo.declare('mazeexplorer.Maze', null, {
                                           this.entities[x].direction});
             }
             
-            d.callAfter(dojo.hitch(this, loopSounds));
+            // Make sure d is set; it will be undefined if there are no
+            // entities to generate sounds for.
+            if (d) {
+                d.callAfter(dojo.hitch(this, loopSounds));
+            }
         }))();
     },
     
@@ -476,6 +370,85 @@ dojo.declare('mazeexplorer.Maze', null, {
                 return [{x: entity.x, y: entity.y}];
             }
         }
+    },
+    
+    getEntityDirection: function (entity) {
+        // Angle values:
+        // -4, 0, 4...: right
+        // -3, 1, 5...: down
+        // -2, 2, 6...: left
+        // -1, 3, 7...: up
+        
+        if (this.player.heading.x > 0) {
+            playerAngle = 0;
+        } else if (this.player.heading.y > 0) {
+            playerAngle = 1;
+        } else if (this.player.heading.x < 0) {
+            playerAngle = 2;
+        } else {
+            playerAngle = 3;
+        }
+        
+        path = this.getPathFromEntityToPlayer(entity);
+        
+        if (path.length > 1) {
+            if (path[path.length - 2].x > this.player.x) {
+                pathAngle = 0;
+            } else if (path[path.length - 2].y > this.player.y) {
+                pathAngle = 1;
+            } else if (path[path.length - 2].x < this.player.x) {
+                pathAngle = 2;
+            } else {
+                pathAngle = 3;
+            }
+        } else {
+            pathAngle = playerAngle;
+        }
+        
+        // Relative direction:
+        // 0: forward
+        // 1: left
+        // 2: behind
+        // 3: right
+        return ((playerAngle - pathAngle) + 4) % 4;
+    },
+    
+    describeEntities: function () {
+        var x, xMax, distance, text = '';
+        
+        xMax = Math.min(this.entities.length, this.audioChannels);
+        
+        for (x = 0; x < xMax; x++) {
+            if (x !== 0) {
+                text += ', ';
+                
+                if (x === xMax - 1) {
+                    text += 'and ';
+                }
+            }
+            
+            text += (this.entities[x].name || 'something') + ' ';
+            distance = this.getPathFromEntityToPlayer(this.entities[x]).length - 1;
+            text += distance + (distance === 1 ? ' step ' : ' steps ');
+            
+            switch (this.getEntityDirection(this.entities[x])) {
+                case 0:     text += 'ahead';        break;
+                case 1:     text += 'to my left';   break;
+                case 2:     text += 'behind me';    break;
+                case 3:     text += 'to my right';  break;
+                default:    text += 'away';
+            }
+        }
+        
+        if (!text) {
+            text = 'nothing.';
+        }
+        
+        text = 'I hear ' + text;
+        
+        this.audio.stop();
+        this.audio.setProperty({name: 'volume', value: 1});
+        this.audio.say({text: text}).callAfter(dojo.hitch(this, this.updateSounds));
     },
     
     destroyEntity: function (entity) {
