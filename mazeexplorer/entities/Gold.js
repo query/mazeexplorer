@@ -3,18 +3,15 @@ dojo.provide('mazeexplorer.entities.Gold');
 dojo.require('mazeexplorer.entities.Entity');
 
 dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
-    sound: '91924__Benboncan__Till_With_Bell',
+    sound: '17953__fonogeno__moneybox02',
     name: 'gold coins',
     baseVolume: 1,
     color: 'yellow',
     
-    sounds: ['91924__Benboncan__Till_With_Bell',
-             '32629__kjackson__Op_Cls_1-edit'],
-    
     pointValue: 0,
     
     constructor: function (maze) {
-        this.pointValue = Math.floor(Math.random() * 50) + 50;
+        this.pointValue = Math.floor(Math.random() * 15) + 5;
     },
     
     update: function (maze) {
@@ -25,6 +22,10 @@ dojo.declare('mazeexplorer.entities.Gold', [mazeexplorer.entities.Entity], {
     },
     
     destroy: function (maze) {
-        // called when the object is being removed from the maze
+        maze.audio.stop({channel: 'announce'});
+        maze.audio.play({channel: 'announce',
+                         url: 'audio/generated/91924__Benboncan__Till_With_Bell-0'});
+        maze.audio.say({channel: 'announce',
+                        text: 'You picked up ' + this.pointValue + ' gold coins.'});
     }
 });

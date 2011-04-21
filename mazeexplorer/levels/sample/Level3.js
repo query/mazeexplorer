@@ -31,12 +31,19 @@ dojo.declare('mazeexplorer.levels.sample.Level3', [mazeexplorer.levels.Level], {
             maze.entities.push(entity);
         }
         
+        // Give one of the monsters the key.
+        entity.hasKey = true;
+        
         for (i = 0; i < 10; i++) {
             entity = new mazeexplorer.entities.Gold(maze);
             entity.x = Math.floor(Math.random() * width);
             entity.y = Math.floor(Math.random() * height);
             maze.entities.push(entity);
         }
+    },
+    
+    introduction: function (maze) {
+        return maze.audio.say({text: 'Level 3.'});
     },
     
     onComplete: function (maze) {

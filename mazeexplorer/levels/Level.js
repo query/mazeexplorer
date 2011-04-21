@@ -4,6 +4,13 @@ dojo.declare('mazeexplorer.levels.Level', null, {
     constructor: function (maze) {
         // called upon entering the level -- fill grid, spawn
         // entities, etc.
+        this.cells = [[-1]];
+        this.width = 1;
+        this.height = 1;
+        maze.origin = {x: 0, y: 0};
+        maze.player.x = 0;
+        maze.player.y = 0;
+        maze.entities = [];
     },
     
     _getUnvisitedNeighbor: function (maze, coordinate) {

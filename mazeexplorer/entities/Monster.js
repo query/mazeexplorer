@@ -1,25 +1,19 @@
 dojo.provide('mazeexplorer.entities.Monster');
 
 dojo.require('mazeexplorer.entities.Entity');
+dojo.require('mazeexplorer.entities.Exit');
 
 dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
     sound: '48709__Sea_Fury__Monster_5',
     baseVolume: 1,
     name: 'a monster',
-    color: 'green',
+    color: 'red',
     
     sounds: ['48688__Sea_Fury__Monster_4',
              '48709__Sea_Fury__Monster_5',
              '49127__aesqe__monster_growl_01'],
     
-    hitPoints: 0,
-    
-    constructor: function (maze) {
-        this.color = 'rgb(' + Math.floor(Math.random() * 255) + ',' +
-                              Math.floor(Math.random() * 255) + ',' +
-                              Math.floor(Math.random() * 255) + ')';
-        this.hitPoints = 100;
-    },
+    hasKey: false,
     
     _checkForPlayerEncounter: function (maze) {
         if (maze.player.x === this.x && maze.player.y === this.y) {
@@ -61,7 +55,29 @@ dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
     },
     
     destroy: function (maze) {
-        maze.audio.play({channel: 'monsterAttack',
+        var entity;
+        
+        maze.audio.stop({channel: 'announce'});
+        maze.audio.play({channel: 'announce',
                          url: 'audio/generated/43586__Syna_Max__punches_and_slaps-single-0'});
+
+        if (!maze.player.hasKey) {
+            if (this.hasKey) {
+                maze.audio.say({channel: 'announce',
+                                text: 'This monster had the key!  Now find ' +
+                                      'the exit.'});
+                maze.player.hasKey = true;
+                
+                // Insert an exit into the maze.
+                entity = new mazeexplorer.entities.Exit(maze);
+                entity.x = Math.floor(Math.random() * maze.cells.length);
+                entity.y = Math.floor(Math.random() * maze.cells[0].length);
+                maze.entities.push(entity);
+            } else {
+                maze.audio.say({channel: 'announce',
+                                text: 'Looks like this monster doesn\'t ' +
+                                      'have the key.  Try again!'});
+            }
+        }
     }
 });

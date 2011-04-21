@@ -16,6 +16,7 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
     _onClick: function () {
         uow.getAudio({defaultCaching: true}).then(dojo.hitch(this, function (audio) {
             this.maze = new mazeexplorer.Maze({audio: audio});
+            this.maze.updateSounds();
             this._redraw();
         }));
     },

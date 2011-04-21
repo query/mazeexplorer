@@ -2,9 +2,9 @@ Before playing the game, the directional sounds needed to play must be created
 by changing to the ``audio`` directory and running the provided ``generate.sh`` 
 script.  This process requires the SoX and FFmpeg binaries.
 
-Audio samples from `Freesound <http://www.freesound.org/>`_ users Percy Duke, 
-kjackson, Sea Fury, aesqe, and Benboncan used under `the Creative Commons 
-Sampling Plus 1.0 license 
+Audio samples from `Freesound <http://www.freesound.org/>`_ users reinsamba, 
+ignotus, fonogeno, Percy Duke, kjackson, Syna-Max, Sea Fury, aesqe, Benboncan, 
+and A43 used under `the Creative Commons Sampling Plus 1.0 license 
 <http://creativecommons.org/licenses/sampling+/1.0/>`_.
 
 All other code is copyright (c) 2011 UNC Open Web Team.  All rights reserved.
