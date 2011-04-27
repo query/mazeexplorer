@@ -64,8 +64,8 @@ dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
         if (!maze.player.hasKey) {
             if (this.hasKey) {
                 maze.audio.say({channel: 'announce',
-                                text: 'This monster had the key!  Now find ' +
-                                      'the exit.'});
+                                text: 'This monster had the treasure!  Now ' +
+                                      'find the exit.'});
                 maze.player.hasKey = true;
                 
                 // Insert an exit into the maze.
@@ -75,8 +75,8 @@ dojo.declare('mazeexplorer.entities.Monster', [mazeexplorer.entities.Entity], {
                 maze.entities.push(entity);
             } else {
                 maze.audio.say({channel: 'announce',
-                                text: 'Looks like this monster doesn\'t ' +
-                                      'have the key.  Try again!'});
+                                text: "Looks like this monster doesn't " +
+                                      'have the treasure.  Try again!'});
             }
         }
     }

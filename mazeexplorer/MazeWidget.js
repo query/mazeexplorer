@@ -73,6 +73,10 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
                 e.preventDefault();
                 this.maze.describeEntities();
             break;
+            
+            case 68:  // 'd'
+                dojo.toggleClass(this.domNode, 'debug');
+            break;
         }
         
         this._redraw();
@@ -81,6 +85,10 @@ dojo.declare('mazeexplorer.MazeWidget', [dijit._Widget, dijit._Templated], {
     },
     
     startup: function () {
-        dojo.connect(document.body, 'onkeydown', this, this._onKeyDown);
+        dojo.connect(document.body, 'ondblclick', this, this._onClick);
+        
+        uow.ui.connectKeys();
+        dojo.subscribe('/uow/key/down/initial',
+                       dojo.hitch(this, this._onKeyDown));
     }
 });
