@@ -1,0 +1,21 @@
+{
+    "identifier": "url",
+    "items": [
+        {
+            "url": "mazeexplorer",
+            "label": {
+                "en-us": "Maze Explorer"
+            },
+            "tags": {
+                "en-us": "maze, sound, positional"
+            },
+            "description": {
+                "en-us": "Hunt for treasure in an underground maze."
+            },
+            "media": {
+                "icon": "mazeexplorer/info/icon.png"
+            },
+            "attribution": "mazeexplorer/info/attribution.json"
+        }
+    ]
+}
